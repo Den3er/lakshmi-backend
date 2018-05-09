@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css">
+    <title>Stats! Invk. Test</title>
+  </head>
+
+  <body>
+    <div class="container mt-5">
+      <h1 class="display-4">Тестовая страница</h1>
+
+      <div class="border-top pt-5 mt-5">
+        <button id="submit-like" class="btn btn-lg btn-light" type="button">Лайк</button>
+        <button id="submit-dislike" class="btn btn-lg btn-light" type="button">Дизлайк</button>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <script>
+      $(function () {
+        $('#submit-like').click(event => {
+          send('like');
+        });
+
+        $('#submit-dislike').click(event => {
+          send('dislike');
+        });
+
+        function disableButtons() {
+          $('#submit-like,#submit-dislike').prop('disabled', true);
+          setTimeout(() => $('#submit-like,#submit-dislike').prop('disabled', false), 60000);
+        }
+
+        function send(action) {
+          $.ajax({
+            type: 'POST',
+            url: 'https://us-central1-lakshmi-backend.cloudfunctions.net/api/v1/posts',
+            data: {
+              post_id: '-LBhsg0HDDDe0z7fxSta',
+              action
+            },
+            dataType: 'json',
+            encode: true
+          })
+            .done(disableButtons)
+            .fail(disableButtons);
+        }
+      });
+    </script>
+  </body>
+
+</html>

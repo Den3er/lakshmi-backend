@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ru">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css">
+    <title>Stats!</title>
+  </head>
+
+  <body>
+    <div class="container mt-5">
+      <h1 class="display-4">Мониторинг и анализ активности</h1>
+      <p class="lead">Обновление страницы через
+        <span id="timer-till-page-refresh" class="badge badge-light">45</span> секунд</p>
+      <div id="chart" class="border rounded mt-4 pt-2"></div>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered table-hover mt-3">
+          <caption>Список пользователей</caption>
+
+          <thead>
+            <tr>
+              <th scope="col">Впервые замечен</th>
+              <th scope="col">Последняя активность</th>
+              <th scope="col">Никнейм</th>
+              <th scope="col">Всего Лайков</th>
+              <th scope="col">Всего Дизлайков</th>
+            </tr>
+          </thead>
+
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/1.29.0/date_fns.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-charts/1.1.0/frappe-charts.min.iife.js"></script>
+    <script src="https://unpkg.com/easytimer.js@2.2.1/dist/easytimer.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.13.0/firebase.js"></script>
+
+    <script>
+      firebase.initializeApp({
+        apiKey: 'AIzaSyDtT_sGWHqgOhuosqMqUCgNcdIVoztWfJY',
+        authDomain: 'lakshmi-backend.firebaseapp.com',
+        databaseURL: 'https://lakshmi-backend.firebaseio.com',
+        projectId: 'lakshmi-backend',
+        storageBucket: 'lakshmi-backend.appspot.com',
+        messagingSenderId: '447483904702'
+      });
+
+      const isWithinRange = dateFns.isWithinRange
+      const startOfToday = dateFns.startOfToday;
+      const format = dateFns.format;
+
+      firebase.database().ref('posts/-LBhsg0HDDDe0z7fxSta').once('value').then(snapshotPost => {
+        const { likes, dislikes } = snapshotPost.val();
+        const now = new Date();
+
+        const datasetLikes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        const datasetDislikes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+        Object.values(likes).forEach(event => {
+          if (isWithinRange(event.timestamp, startOfToday(), now)) {
+            datasetLikes[format(event.timestamp, 'H')] += 1;
+          }
+        });
+
+        Object.values(dislikes).forEach(event => {
+          if (isWithinRange(event.timestamp, startOfToday(), now)) {
+            datasetDislikes[format(event.timestamp, 'H')] += 1;
+          }
+        });
+
+        new frappe.Chart('#chart', {
+          data: {
+            labels: [
+              '00:00',
+              '01:00',
+              '02:00',
+              '03:00',
+              '04:00',
+              '05:00',
+              '06:00',
+              '07:00',
+              '08:00',
+              '09:00',
+              '10:00',
+              '11:00',
+              '12:00',
+              '13:00',
+              '14:00',
+              '15:00',
+              '16:00',
+              '17:00',
+              '18:00',
+              '19:00',
+              '20:00',
+              '21:00',
+              '22:00',
+              '23:00'
+            ],
+            datasets: [
+              {
+                name: 'Лайки',
+                values: datasetLikes
+              },
+              {
+                name: 'Дизлайки',
+                values: datasetDislikes
+              }
+            ]
+          },
+          title: 'Тестовая страница #1',
+          colors: ['violet', 'light-blue'],
+
+
+          type: 'line',
+          height: 350,
+          lineOptions: {
+            regionFill: 1,
+            heatline: 1
+          },
+        });
+      });
+
+      const distanceInWords = dateFns.distanceInWords;
+
+      firebase.database().ref('users').once('value').then(snapshotUsers => {
+        const table = $('table tbody');
+        const now = new Date();
+
+        snapshotUsers.forEach(user => {
+          const { created_at, last_like_event, silly_name, total_likes, total_dislikes } = user.val();
+
+          const c1 = distanceInWords(created_at, now);
+          const c2 = distanceInWords(last_like_event, now);
+          const c3 = silly_name;
+          const c4 = total_likes;
+          const c5 = total_dislikes;
+
+          table.append(`<tr><td>${c1}</td><td>${c2}</td><td>${c3}</td><td>${c4}</td><td>${c5}</td></tr>`);
+        });
+      });
+
+      const timer = new Timer();
+
+      timer.start({
+        countdown: true,
+        startValues: {
+          seconds: 45
+        }
+      });
+
+      timer.addEventListener('secondsUpdated', function () {
+        $('#timer-till-page-refresh').html(timer.getTimeValues().seconds);
+      });
+
+      timer.addEventListener('targetAchieved', function () {
+        location.reload();
+      });
+    </script>
+  </body>
+
+</html>
